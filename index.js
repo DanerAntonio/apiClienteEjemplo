@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -14,12 +15,15 @@ const corsOptions = {
 
 // Habilitar CORS con la configuración
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json()); // Para poder leer el cuerpo de las solicitudes en formato JSON
 
 // Conexión a MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Conectado a MongoDB'))
-    .catch(err => console.error('Error conectando a MongoDB', err));
+mongoose.connect(process.env.MONGO_URI, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true 
+})
+.then(() => console.log('Conectado a MongoDB'))
+.catch(err => console.error('Error conectando a MongoDB', err));
 
 // Modelo de Cliente
 const clientSchema = new mongoose.Schema({
