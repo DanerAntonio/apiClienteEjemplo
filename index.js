@@ -1,64 +1,53 @@
-// index.js
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-require('dotenv').config(); // Cargar las variables de entorno desde el archivo .env
+require('dotenv').config();
 
 const app = express();
 
-// Habilitar CORS y soporte para JSON
-app.use(cors());
+// Configurar CORS para permitir el origen específico
+const corsOptions = {
+    origin: 'http://127.0.0.1:5500', // Cambia esto al origen de tu frontend
+    methods: ['GET', 'POST', 'DELETE'], // Métodos permitidos
+    credentials: true, // Permitir credenciales
+};
+
+// Habilitar CORS con la configuración
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Conectar a MongoDB usando Mongoose y la URL del archivo .env
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('Conectado a MongoDB'))
-.catch(err => console.error('Error al conectar a MongoDB', err));
+// Conexión a MongoDB
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch(err => console.error('Error conectando a MongoDB', err));
 
-// Definir el modelo de Cliente
+// Modelo de Cliente
 const clientSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    name: String,
+    email: String,
+    phone: String,
+    address: String,
 });
-
 const Client = mongoose.model('Client', clientSchema);
 
-// Endpoint para obtener todos los clientes
+// Endpoint para obtener clientes
 app.get('/clients', async (req, res) => {
     try {
         const clients = await Client.find();
         res.json(clients);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Endpoint para crear un nuevo cliente
+// Endpoint para agregar un cliente
 app.post('/clients', async (req, res) => {
-    const newClient = new Client(req.body);
+    const client = new Client(req.body);
     try {
-        const savedClient = await newClient.save();
+        const savedClient = await client.save();
         res.status(201).json(savedClient);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
-
-// Endpoint para actualizar un cliente existente
-app.put('/clients/:id', async (req, res) => {
-    try {
-        const updatedClient = await Client.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedClient) return res.status(404).json({ message: "Cliente no encontrado" });
-        res.json(updatedClient);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
 });
 
@@ -66,14 +55,16 @@ app.put('/clients/:id', async (req, res) => {
 app.delete('/clients/:id', async (req, res) => {
     try {
         const deletedClient = await Client.findByIdAndDelete(req.params.id);
-        if (!deletedClient) return res.status(404).json({ message: "Cliente no encontrado" });
-        res.json({ message: "Cliente eliminado" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        if (!deletedClient) {
+            return res.status(404).json({ message: 'Cliente no encontrado' });
+        }
+        res.json({ message: 'Cliente eliminado' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Iniciar el servidor usando el puerto definido en el archivo .env
+// Iniciar el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
